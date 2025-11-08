@@ -1,4 +1,482 @@
-const TOP_CRYPTOS = [
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DCA Trading Bot - MetaMask</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: fadeInDown 0.8s;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .wallet-section {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: fadeInUp 0.8s;
+        }
+
+        .wallet-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(56, 239, 125, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(235, 51, 73, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .status.connected {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .status.disconnected {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: fadeInUp 0.8s;
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .info-box h3 {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .info-box p {
+            margin: 5px 0;
+            font-size: 0.95em;
+        }
+
+        .dca-status {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .dca-status h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            color: #333;
+            font-weight: bold;
+        }
+
+        .history-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .history-item.success {
+            border-left-color: #38ef7d;
+        }
+
+        .history-item.failed {
+            border-left-color: #f45c43;
+        }
+
+        .history-time {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .history-details {
+            font-size: 0.95em;
+            color: #333;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .network-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .network-bsc {
+            background: #f3ba2f;
+            color: #000;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .wallet-info {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 DCA Trading Bot</h1>
+            <p>Investissement automatique avec MetaMask - Top 100 Cryptos</p>
+        </div>
+
+        <div class="wallet-section">
+            <div class="wallet-info">
+                <div>
+                    <span id="walletStatus" class="status disconnected">Non connecté</span>
+                    <span id="networkBadge" class="network-badge" style="display: none;"></span>
+                </div>
+                <div>
+                    <span id="walletAddress" style="color: #666; font-weight: bold;"></span>
+                </div>
+                <div>
+                    <button id="connectBtn" class="btn btn-primary" onclick="connectWallet()">
+                        Connecter MetaMask
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="connectedContent" style="display: none;">
+            <div class="grid">
+                <div class="card">
+                    <h2>⚙️ Configuration DCA</h2>
+                    
+                    <div class="form-group">
+                        <label>Réseau</label>
+                        <select id="networkSelect" onchange="updateNetwork()">
+                            <option value="bsc">Binance Smart Chain (BSC)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Crypto à acheter</label>
+                        <select id="cryptoSelect" onchange="updateCryptoInfo()">
+                            <option value="">-- Sélectionner une crypto --</option>
+                        </select>
+                    </div>
+
+                    <div class="alert alert-info" id="cryptoInfo" style="display: none;">
+                        💡 <span id="cryptoDescription"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Montant par achat (USDT)</label>
+                        <input type="number" id="amountInput" step="1" min="1" placeholder="10">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Balance USDT: <span id="usdtBalance">0</span> USDT</label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Intervalle</label>
+                        <select id="intervalSelect">
+                            <option value="3600">Toutes les heures</option>
+                            <option value="21600">Toutes les 6 heures</option>
+                            <option value="43200">Toutes les 12 heures</option>
+                            <option value="86400">Tous les jours</option>
+                            <option value="604800">Toutes les semaines</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Slippage toléré (%)</label>
+                        <input type="number" id="slippageInput" value="1" min="0.1" max="50" step="0.1">
+                    </div>
+
+                    <button id="buyNowBtn" class="btn btn-primary" onclick="buyNowManual()" style="width: 100%; margin-top: 10px;">
+                        ⚡ Acheter Maintenant
+                    </button>
+
+                    <button id="startDcaBtn" class="btn btn-success" onclick="startDCA()" style="width: 100%; margin-top: 10px;">
+                        🚀 Démarrer le DCA Auto
+                    </button>
+
+                    <button id="stopDcaBtn" class="btn btn-danger" onclick="stopDCA()" style="width: 100%; margin-top: 10px; display: none;">
+                        ⏸️ Arrêter le DCA
+                    </button>
+                </div>
+
+                <div class="card">
+                    <h2>📊 Statut DCA</h2>
+                    
+                    <div class="info-box">
+                        <h3>Configuration actuelle</h3>
+                        <p><strong>Action:</strong> Achat via PancakeSwap 🥞</p>
+                        <p><strong>Montant:</strong> <span id="currentAmount">-</span></p>
+                        <p><strong>Intervalle:</strong> <span id="currentInterval">-</span></p>
+                        <p><strong>Statut:</strong> <span id="dcaStatus">Inactif</span></p>
+                    </div>
+
+                    <div class="dca-status">
+                        <h3>Statistiques</h3>
+                        <div class="stat-item">
+                            <span class="stat-label">Prochaine exécution:</span>
+                            <span class="stat-value" id="nextExecution">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Achats effectués:</span>
+                            <span class="stat-value" id="totalBuys">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Total investi:</span>
+                            <span class="stat-value" id="totalInvested">0 USDT</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Tokens reçus:</span>
+                            <span class="stat-value" id="totalTokens">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📜 Historique</h2>
+                <div id="historyContainer">
+                    <div class="alert alert-info">
+                        Aucune transaction pour le moment
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let userAccount;
+        let currentNetwork = 'bsc';
+        let dcaInterval;
+        let selectedCrypto = null;
+        let dcaConfig = {
+            active: false,
+            crypto: null,
+            amount: 0,
+            interval: 0,
+            slippage: 1,
+            nextRun: null,
+            stats: {
+                totalBuys: 0,
+                totalInvested: 0,
+                totalTokens: 0
+            }
+        };
+
+        const USDT_ADDRESS = '0x55d398326f99059fF775485246999027B3197955';
+        const WBNB_ADDRESS = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c';
+        
+        const DEX_AGGREGATORS = {
+            pancakeswap: {
+                name: 'PancakeSwap',
+                router: '0x10ED43C718714eb63d5aA57B78B54704E256024E',
+                icon: '🥞',
+                color: '#d1884f',
+                enabled: true
+            }
+        };
+
+        const TOP_CRYPTOS = [
             { symbol: 'BNB', name: 'BNB', address: WBNB_ADDRESS, rank: 1, description: 'Binance Coin - Token natif de Binance' },
             { symbol: 'BTC', name: 'Bitcoin', address: '0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c', rank: 2, description: 'Bitcoin - La première crypto-monnaie' },
             { symbol: 'ETH', name: 'Ethereum', address: '0x2170Ed0880ac9A755fd29B2688956BD959F933F8', rank: 3, description: 'Ethereum - Plateforme de smart contracts' },
@@ -26,7 +504,6 @@ const TOP_CRYPTOS = [
             { symbol: 'ETC', name: 'Ethereum Classic', address: '0x3d6545b08693daE087E957cb1180ee38B9e3c25E', rank: 25, description: 'Ethereum Classic - Ethereum original' },
             { symbol: 'ALGO', name: 'Algorand', address: '0x03D6BD3d48F956D783456695698C407A46ecD54d', rank: 26, description: 'Algorand - Blockchain pure proof-of-stake' },
             { symbol: 'AAVE', name: 'Aave', address: '0xfb6115445Bff7b52FeB98650C87f44907E58f802', rank: 27, description: 'Aave - Protocole de prêt DeFi' },
-            { symbol: 'XMR', name: 'Monero', address: '0xE3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3', rank: 28, description: 'Monero - Crypto privée (pas sur BSC)' },
             { symbol: 'FTM', name: 'Fantom', address: '0xAD29AbB318791D579433D831ed122aFeAf29dcfe', rank: 29, description: 'Fantom - Plateforme DeFi rapide' },
             { symbol: 'CAKE', name: 'PancakeSwap', address: '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82', rank: 31, description: 'PancakeSwap - DEX principal sur BSC' },
             { symbol: 'AXS', name: 'Axie Infinity', address: '0x715D400F88C167884bbCc41C5FeA407ed4D2f8A0', rank: 32, description: 'Axie Infinity - Jeu play-to-earn' },
@@ -37,5 +514,64 @@ const TOP_CRYPTOS = [
             { symbol: 'CHZ', name: 'Chiliz', address: '0x0fD98b8C58560167A236f1D0553a3f13Cc7deB04', rank: 37, description: 'Chiliz - Tokens de fans sportifs' },
             { symbol: 'EGLD', name: 'MultiversX', address: '0xbF7c81FFF98BbE61B40Ed186e4AfD6DDd01337fe', rank: 38, description: 'MultiversX - Blockchain internet-scale' },
             { symbol: 'THETA', name: 'Theta Network', address: '0x2aB0e9e4eE70FFf1fB9D67031E44F6410170d00e', rank: 39, description: 'Theta - Streaming vidéo décentralisé' },
-            { symbol: 'GRT', name: 'The Graph', address: '0x78F8649D0BdE6B17DC90cd939FB1EEED926FEd4B', rank: 40, description: 'The Graph - Indexation blockchain' }
-        ];
+            { symbol: 'GRT', name: 'The Graph', address: '0x78F8649D0BdE6B17DC90cd939FB1EEED926FEd4B', rank: 40, description: 'The Graph - Indexation blockchain' },
+            { symbol: 'RUNE', name: 'THORChain', address: '0xA9776B590bfc2f956711b3419910A5Ec1F63153E', rank: 41, description: 'THORChain - Liquidité cross-chain' },
+            { symbol: 'FTT', name: 'FTX Token', address: '0x49BA054B9664e99ac335667a917c63bB94332E84', rank: 42, description: 'FTX Token - Exchange token' },
+            { symbol: 'QNT', name: 'Quant', address: '0xdd9e1F9D0f8f9c2b2b2C9E6b3e9E9E9E9E9E9E9E', rank: 43, description: 'Quant - Interopérabilité blockchain' },
+            { symbol: 'AR', name: 'Arweave', address: '0xf03D6c3D7a1C7E23c52595b5B6e9fE5B0e3A2547', rank: 44, description: 'Arweave - Stockage permanent' },
+            { symbol: 'ZEC', name: 'Zcash', address: '0x1Ba42e5193dfA8B03D15dd1B86a3113bbBEF8Eeb', rank: 45, description: 'Zcash - Crypto privée' },
+            { symbol: 'FLOW', name: 'Flow', address: '0xC943c5320B9c18C153d1e2d12cC3074bebfb31A2', rank: 46, description: 'Flow - NFT et gaming' },
+            { symbol: 'XEC', name: 'eCash', address: '0x0Ef2e7602adD1733Bfdb17aC3094d0421B502cA3', rank: 47, description: 'eCash - Argent électronique' },
+            { symbol: 'BSV', name: 'Bitcoin SV', address: '0x4FA7163E153419E0E1064e418dd7A99314Ed27b6', rank: 48, description: 'Bitcoin SV - Vision de Satoshi' },
+            { symbol: 'ICP', name: 'Internet Computer', address: '0x1ED29E82bF3B227bB085Dbd3d2b8d59A7Eb3d52D', rank: 49, description: 'Internet Computer - Cloud décentralisé' },
+            { symbol: 'KLAY', name: 'Klaytn', address: '0x4FA7163E153419E0E1064e418dd7A99314Ed27b6', rank: 50, description: 'Klaytn - Blockchain coréenne' },
+            { symbol: 'CRO', name: 'Cronos', address: '0xAdBD1231fb360047525BEdF962581F3eee7b49fe', rank: 51, description: 'Cronos - Crypto.com Chain' },
+            { symbol: 'MKR', name: 'Maker', address: '0x5f0Da599BB2ccCfcf6Fdfd7D81743B6020864350', rank: 52, description: 'Maker - Stablecoin DAI' },
+            { symbol: 'RPL', name: 'Rocket Pool', address: '0x4e0154c59341819E9654De28a0C659A5beF1Da35', rank: 53, description: 'Rocket Pool - Staking Ethereum' },
+            { symbol: 'LDO', name: 'Lido DAO', address: '0x986854779804799C1d68867F5E03e601E781e41b', rank: 54, description: 'Lido - Liquid staking' },
+            { symbol: 'SNX', name: 'Synthetix', address: '0x9Ac983826058b8a9C7Aa1C9171441191232E8404', rank: 55, description: 'Synthetix - Actifs synthétiques' },
+            { symbol: 'COMP', name: 'Compound', address: '0x52CE071Bd9b1C4B00A0b92D298c512478CaD67e8', rank: 56, description: 'Compound - Prêt DeFi' },
+            { symbol: 'CRV', name: 'Curve', address: '0x2bA64EFB7A4Ec8983E22A49c81fa216AC33f383A', rank: 57, description: 'Curve - AMM stablecoins' },
+            { symbol: '1INCH', name: '1inch', address: '0x111111111117dC0aa78b770fA6A738034120C302', rank: 58, description: '1inch - Agrégateur DEX' },
+            { symbol: 'ENJ', name: 'Enjin Coin', address: '0xF629cBd94d3791C9250152BD8dfBDF380E2a3B9c', rank: 59, description: 'Enjin - Gaming NFT' },
+            { symbol: 'ZIL', name: 'Zilliqa', address: '0xb86AbCb37C3A4B64f74f59301AFF131a1BEcC787', rank: 60, description: 'Zilliqa - Sharding blockchain' },
+            { symbol: 'NEXO', name: 'Nexo', address: '0x56d811088235F11C8920698a204A5010a788f4b3', rank: 61, description: 'Nexo - Prêt crypto' },
+            { symbol: 'BAT', name: 'Basic Attention Token', address: '0x101d82428437127bF1608F699CD651e6Abf9766E', rank: 62, description: 'BAT - Navigateur Brave' },
+            { symbol: 'DASH', name: 'Dash', address: '0x0E8D5504bF54D9E44260f8d153EcD5412130CaBb', rank: 63, description: 'Dash - Paiements instantanés' },
+            { symbol: 'DCR', name: 'Decred', address: '0xFA54fF1a158B5189Ebba6ae130CEd6bbd3aEA76e', rank: 64, description: 'Decred - Gouvernance on-chain' },
+            { symbol: 'HOT', name: 'Holo', address: '0x9c65AB58d8d978DB963e63f2bfB7121627e3a739', rank: 65, description: 'Holo - Cloud décentralisé' },
+            { symbol: 'ZRX', name: '0x Protocol', address: '0xE4Cc45Bb5DBDA06dB6183E8bf016569f40497Aa5', rank: 66, description: '0x - Protocole d\'échange' },
+            { symbol: 'OMG', name: 'OMG Network', address: '0xF78D2e7936F5Fe18308A3B2951A93b6c4a41F5e2', rank: 67, description: 'OMG - Scaling Ethereum' },
+            { symbol: 'WAVES', name: 'Waves', address: '0x0E8d5504bF54D9E44260f8d153EcD5412130CaBb', rank: 68, description: 'Waves - Plateforme blockchain' },
+            { symbol: 'ICX', name: 'ICON', address: '0x9b7B6A964f8870699Ae74744941663D257b0Ec1e', rank: 69, description: 'ICON - Blockchain coréenne' },
+            { symbol: 'QTUM', name: 'Qtum', address: '0xd0Ce863D9e8F0a8DFc57082fAf5a1d0Ea0b1A7AF', rank: 70, description: 'Qtum - Smart contracts Bitcoin' },
+            { symbol: 'ONT', name: 'Ontology', address: '0xFd7B3A77848f1C2D67E05E54d78d174a0C850335', rank: 71, description: 'Ontology - Identité décentralisée' },
+            { symbol: 'SC', name: 'Siacoin', address: '0x8D9c442bF49ceCcC5C4a1f794F87068C64ab9BDc', rank: 72, description: 'Siacoin - Stockage cloud' },
+            { symbol: 'IOST', name: 'IOST', address: '0x5F1D2cFDEB097B83eD2f35Cf3E827DE2b700F05a', rank: 73, description: 'IOST - IoT blockchain' },
+            { symbol: 'RVN', name: 'Ravencoin', address: '0x1F69a0E4EE72B4e1EEb9d30acEa8b80A84B5DFcb', rank: 74, description: 'Ravencoin - Transfert d\'actifs' },
+            { symbol: 'KNC', name: 'Kyber Network', address: '0xfe56d5892BDffC7BF58f2E84BE1b2C32D21C308b', rank: 75, description: 'Kyber - Liquidité on-chain' },
+            { symbol: 'REP', name: 'Augur', address: '0xF7917c5aFfBc0dF98D5EA06383b7dFe1e88F35D7', rank: 76, description: 'Augur - Marchés prédictifs' },
+            { symbol: 'BNT', name: 'Bancor', address: '0xc26a47E2c6367c18a7dD21E6c5c140EdF6c47e34', rank: 77, description: 'Bancor - Liquidité automatisée' },
+            { symbol: 'LSK', name: 'Lisk', address: '0xd9eEFdb09D75ca848433079fAb0C36AbC0A2Fc26', rank: 78, description: 'Lisk - Applications JavaScript' },
+            { symbol: 'NANO', name: 'Nano', address: '0x8f2b8dE2F96d36E19D3c56bFF30FbBdE45C4D21a', rank: 79, description: 'Nano - Transactions gratuites' },
+            { symbol: 'DGB', name: 'DigiByte', address: '0xdD237a6a56ee2f2bdc8ea8a9b9bDe98aC5f82CfD', rank: 80, description: 'DigiByte - Sécurité et vitesse' },
+            { symbol: 'BTG', name: 'Bitcoin Gold', address: '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82', rank: 81, description: 'Bitcoin Gold - Mining GPU' },
+            { symbol: 'MINA', name: 'Mina Protocol', address: '0x582c12b30F85162fA393486435baBED5638f9f49', rank: 82, description: 'Mina - Blockchain légère' },
+            { symbol: 'GLMR', name: 'Moonbeam', address: '0x26433C8127d9b4e9B71Eaa15111DF99Ea2EeB2f8', rank: 83, description: 'Moonbeam - Parachain Polkadot' },
+            { symbol: 'KAVA', name: 'Kava', address: '0x5F88AB06e8dfe89DF127B2430Bba4Af600866035', rank: 84, description: 'Kava - DeFi cross-chain' },
+            { symbol: 'STX', name: 'Stacks', address: '0xf03D6c3D7a1C7E23c52595b5B6e9fE5B0e3A2547', rank: 85, description: 'Stacks - Smart contracts Bitcoin' },
+            { symbol: 'YFI', name: 'yearn.finance', address: '0x88f1A5ae2A3BF98AEAF342D26B30a79438c9142e', rank: 86, description: 'yearn.finance - Yield farming' },
+            { symbol: 'SUSHI', name: 'SushiSwap', address: '0x947950BcC74888a40Ffa2593C5798F11Fc9124C4', rank: 87, description: 'SushiSwap - DEX et AMM' },
+            { symbol: 'BAL', name: 'Balancer', address: '0x8519EA49c997f50cefFa444d240fB655e89248Aa', rank: 88, description: 'Balancer - Pools liquidité' },
+            { symbol: 'OCEAN', name: 'Ocean Protocol', address: '0xDCE07662CA8EbC241316a15B611c89711414Dd1a', rank: 89, description: 'Ocean - Marketplace données' },
+            { symbol: 'CELO', name: 'Celo', address: '0x2A335e327a55b177f5B40132fEC5D7298aa0D7e6', rank: 90, description: 'Celo - Paiements mobiles' },
+            { symbol: 'ROSE', name: 'Oasis Network', address: '0x582c12b30F85162fA393486435baBED5638f9f49', rank: 91, description: 'Oasis - Confidentialité blockchain' },
+            { symbol: 'IOTX', name: 'IoTeX', address: '0x9678E42ceBEb63F23197D726B29b1CB20d0064E5', rank: 92, description: 'IoTeX - Internet des Objets' },
+            { symbol: 'ANKR', name: 'Ankr', address: '0xf307910A4c7bbc79691fD374889b36d8531B08e3', rank: 93, description: 'Ankr - Infrastructure Web3' },
+            { symbol: 'ONE', name: 'Harmony', address: '0x03fF0ff224f904be3118461335064bB48Df47938', rank: 94, description: 'Harmony - Blockchain rapide' },
+            { symbol: 'ENS', name: 'Ethereum Name Service', address: '0x123bD395E368d57a9B57fc5aC874924Bd49FF61B', rank: 95, description: 'ENS - Noms de domaine Web3' },
+            { symbol: 'AUDIO', name: 'Audius', address: '0xd0Ce863D9e8F0a8DFc57082fAf5a1d0Ea0b1A7AF', rank: 96, description: 'Audius - Streaming musical' },
+            { symbol: 'DYDX', name: 'dYdX', address: '0xE40CfDBd8D827C7B3F8F47F0F7A1bF3A8a0B7F5D', rank: 97, description: 'dYdX - Trading décentralisé' },
+            { symbol: 'IMX', name: 'Immutable X', address: '0x26433C8127d9b4e9B71Eaa15111DF99Ea2EeB2f8', rank: 98, description: 'Immutable X - NFT Layer 2' },
+            { symbol: 'LRC', name: 'Loopring', address: '0xf03D6c3D7a1C7E23c52595b5B6e9fE5B0e3A2547', rank: 99, description: 'Loopring - zkRollup Exchange' },
+            { symbol: 'GALA', name: 'Gala', address: '0x7dDEE176F665cD201F93eEDE625770E2fD911990', rank: 100, description: 'Gala - Gaming blockchain' }
